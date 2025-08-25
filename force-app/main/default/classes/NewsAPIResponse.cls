@@ -2,6 +2,11 @@
  * Wrapper class for parsing the NewsAPI response
  */
 public class NewsAPIResponse {
+    private static final String NO_NAME = 'Without Title';
+    private static final String NO_AUTHOR = 'Without Author';
+    private static final String NO_CONTENT = 'Without Content';
+    private static final String NO_DESCRIPTION = 'Without Description';
+    private static final String NO_SOURCE = 'Without Source';
     // TODO: Define fields to match the NewsAPI response structure
     public String status { get; set; }
     public Integer totalResults { get; set; }
@@ -13,10 +18,14 @@ public class NewsAPIResponse {
     public class Article {
         // TODO: Define article fields
         // Example fields:
-        // public String title { get; set; }
-        // public String description { get; set; }
-        // public String url { get; set; }
-        // etc.
+        public Source source { get; set; }
+        public String author { get; set; }
+        public String title { get; set; } 
+        public String description { get; set; }
+        public String url { get; set; }
+        public String urlToImage { get; set; }
+        public Datetime publishedAt { get; set; }
+        public String content { get; set; }
     }
     
     /**
@@ -25,8 +34,8 @@ public class NewsAPIResponse {
     public class Source {
         // TODO: Define source fields
         // Example fields:
-        // public String id { get; set; }
-        // public String name { get; set; }
+        public String id { get; set; }
+        public String name { get; set; }
     }
     
     /**
@@ -37,11 +46,17 @@ public class NewsAPIResponse {
     public static Article__c convertToSObject(Article apiArticle) {
         // TODO: Implement conversion from API article to Salesforce record
         // Consider:
+        Article__c article = new Article__c();
         // - Generating a unique record name
+        article.Name = apiArticle?.title != null ? apiArticle.title.left(75) : NO_NAME;
         // - Setting article fields from the API response
         // - Handling content length limits if needed
         // - Handling date conversion
-        
-        return null;
+        article.Author__c = apiArticle?.author != null ? apiArticle.author.left(250) : NO_AUTHOR;
+        article.Content__c = apiArticle?.content != null ? apiArticle.content : NO_CONTENT;
+        article.Description__c = apiArticle?.description != null ? apiArticle.description : NO_DESCRIPTION;
+        article.Published_At__c = apiArticle?.publishedAt;
+        article.Source__c = (apiArticle?.source?.id + '_' + apiArticle?.source?.name).left(250);
+        return article;
     }
 } 
