@@ -3,6 +3,7 @@
  */
 public with sharing class NewsCategoryTriggerHandler {
     
+    private static Integer INITIAL_CURRENT_PAGE = 1;
     /**
      * Handles after insert events for News_Category__c
      * Uses Queueable for callouts when Sync__c is true
@@ -10,8 +11,17 @@ public with sharing class NewsCategoryTriggerHandler {
      */
     public static void handleInsert(List<News_Category__c> newRecords) {
         // TODO: Implement insert handler
+        List<News_Category__c> syncedCategories = new List<News_Category__c>();
         // - Filter categories that need to be synced (Sync__c = true)
-        // - Call queueable method for callouts
+        for (News_Category__c category : newRecords) {
+            if (category.Sync__c == true) {
+                // - Call queueable method for callouts
+                syncedCategories.add(category);
+            }
+        }
+        if (syncedCategories != null && !syncedCategories.isEmpty()) {
+            syncCategoriesWithQueueable(syncedCategories);
+        }
     }
     
     /**
@@ -22,8 +32,19 @@ public with sharing class NewsCategoryTriggerHandler {
      */
     public static void handleUpdate(List<News_Category__c> newRecords, Map<Id, News_Category__c> oldMap) {
         // TODO: Implement update handler
+        List<News_Category__c> syncedCategories = new List<News_Category__c>();
         // - Filter categories that need to be synced (Sync__c changed from false to true)
-        // - Call queueable method for callouts
+        for (News_Category__c category : newRecords) {
+            News_Category__c oldCategory = oldMap.get(category.Id);
+            if (category.Sync__c != oldCategory.Sync__c &&
+                category.Sync__c == true) {
+                // - Call queueable method for callouts
+                syncedCategories.add(category);
+            }
+        }
+        if (syncedCategories != null && !syncedCategories.isEmpty()) {
+            syncCategoriesWithQueueable(syncedCategories);
+        }
     }
     
     /**
@@ -33,5 +54,8 @@ public with sharing class NewsCategoryTriggerHandler {
     private static void syncCategoriesWithQueueable(List<News_Category__c> categoriesToSync) {
         // TODO: Implement queueable job enqueuing
         // - Create and enqueue NewsCategoryQueueable job for each category
+        for (News_Category__c syncedCat : categoriesToSync) {
+           System.enqueueJob(new NewsCategoryQueueable(syncedCat, INITIAL_CURRENT_PAGE));
+        }
     }
 } 

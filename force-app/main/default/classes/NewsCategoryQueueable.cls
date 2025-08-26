@@ -3,8 +3,7 @@
  */
 public class NewsCategoryQueueable implements Queueable, Database.AllowsCallouts {
     // Static variable for maximum pages to fetch
-    private static final Integer MAX_PAGES = 3;
-    
+    private static Integer MAX_PAGES;
     private News_Category__c category;
     private Integer currentPage;
     
@@ -15,6 +14,8 @@ public class NewsCategoryQueueable implements Queueable, Database.AllowsCallouts
      */
     public NewsCategoryQueueable(News_Category__c category, Integer currentPage) {
         // TODO: Initialize with category and current page
+        this.category = category;
+        this.currentPage = currentPage;
     }
     
     /**
@@ -23,21 +24,42 @@ public class NewsCategoryQueueable implements Queueable, Database.AllowsCallouts
      */
     public void execute(QueueableContext context) {
         // IMPORTANT: Create a separate instance of the category for updates
-        News_Category__c updatedCategory = new News_Category__c(Id = category.Id);
-        
-        try {
-            // TODO: Implement execute method
-            // - Call NewsAPI for the current page
-            // - Convert API articles to Salesforce articles using NewsAPIResponse.convertToSObject
-            // - Add category reference to each article
-            // - Insert the articles
-            // - Check if reached MAX_PAGES or no more articles
-            // HINT: When requeuing the job check if tests are running
-            // - Update category with last synced date and sync flag = false
-        } catch (Exception e) {
-            // TODO: Handle errors
-            // - Update category with error information
-            // - Log error to debug logs
+        if (category.Sync__c == true) {
+            News_Category__c updatedCategory = new News_Category__c(Id = category.Id);
+            List<Article__c> articlesForInsert = new List<Article__c>();
+            try {
+                // TODO: Implement execute method
+                // - Call NewsAPI for the current page
+                NewsAPIResponse wrapperObj = new NewsAPIResponse();
+                wrapperObj = NewsAPIService.getTopHeadlinesByCategory(category.Name, currentPage);
+                // - Convert API articles to Salesforce articles using NewsAPIResponse.convertToSObject
+                for (NewsAPIResponse.Article art : wrapperObj.articles) {
+                    Article__c artRec = NewsAPIResponse.convertToSObject(art);
+                    // - Add category reference to each article
+                    artRec.News_Category__c = category.Id;
+                    artRec.Category__c = category.Name;
+                    articlesForInsert.add(artRec);
+                }
+                // - Insert the articles
+                insert articlesForInsert;
+                this.currentPage ++;
+                MAX_PAGES = (Integer)Math.ceil(((Decimal)wrapperObj.totalResults / NewsAPIService.PAGE_SIZE));
+                // - Check if reached MAX_PAGES or no more articles
+                if (currentPage <= MAX_PAGES && wrapperObj.articles != null && !wrapperObj.articles.isEmpty() && !Test.isRunningTest()) {
+                    System.enqueueJob(new NewsCategoryQueueable(category, currentPage));
+                } else {
+                    updatedCategory.Sync__c = false;
+                    updatedCategory.Last_Synced__c = Datetime.now();
+                    update updatedCategory;
+                }
+                // HINT: When requeuing the job check if tests are running
+                // - Update category with last synced date and sync flag = false
+            } catch (Exception e) {
+                // TODO: Handle errors
+                // - Update category with error information
+                // - Log error to debug logs
+            }
         }
+            
     }
 } 
