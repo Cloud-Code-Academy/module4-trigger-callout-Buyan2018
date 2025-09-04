@@ -4,11 +4,10 @@
 public with sharing class NewsAPIService {
     // TODO: Define API endpoint constants
     private static final String API_NAMED_CREDENTIAL = 'callout:NewsAPI'; //https://newsapi.org
-    private static final String API_ENDPOINT = '/v2/top-headlines';
-    private static final String API_CATEGORY = '?category=';
+    private static final String API_ENDPOINT_CATEGORY = '/v2/top-headlines?category=';
     private static final String API_PAGE_SIZE = '&pageSize=';
     private static final String API_PAGE = '&page=';
-    private static final String API_KEY = '&apiKey=';
+    private static final String URL_API_KEY = '&apiKey=';
     private static final String API_KEY_NAME = 'NewsAPI';
     private static final String API_GET_METHOD = 'GET';
     private static final Integer INITIAL_SUCCESS_CODE = 200;
@@ -24,14 +23,14 @@ public with sharing class NewsAPIService {
      * @return NewsAPIResponse The wrapper object containing the API response
      */
     public static NewsAPIResponse getTopHeadlinesByCategory(String category, Integer page) {
-        APIKeys__mdt apiKey = APIKeys__mdt.getInstance(API_KEY_NAME);
+        //APIKeys__mdt apiKey = APIKeys__mdt.getInstance(API_KEY_NAME);
         String endPointForCall;
         // TODO: Implement method to fetch headlines by category
         // - Validate parameters
         if (categoryNames.contains(category.toLowerCase())) {
             // - Build the request URL with fixed page size
-            endPointForCall = API_NAMED_CREDENTIAL + API_ENDPOINT + API_CATEGORY + category + 
-                                API_PAGE_SIZE + PAGE_SIZE + API_PAGE + page + API_KEY + apiKey.Key__c;
+            endPointForCall = API_NAMED_CREDENTIAL + API_ENDPOINT_CATEGORY + category + 
+                                API_PAGE_SIZE + PAGE_SIZE + API_PAGE + page;
         }
         // - Make the callout
         HttpResponse response = makeCallout(endPointForCall);
@@ -52,6 +51,7 @@ public with sharing class NewsAPIService {
         HttpRequest req = new HttpRequest();
         req.setEndpoint(endpoint);
         req.setMethod(API_GET_METHOD);
+        //req.setHeader('APIKEY', '{!$Credential.Password}');
         // - Make the callout
         Http http = new Http();
         HttpResponse res = http.send(req);

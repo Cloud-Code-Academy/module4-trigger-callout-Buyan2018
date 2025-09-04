@@ -50,6 +50,7 @@ public class NewsCategoryQueueable implements Queueable, Database.AllowsCallouts
                 } else {
                     updatedCategory.Sync__c = false;
                     updatedCategory.Last_Synced__c = Datetime.now();
+                    updatedCategory.ErrorMessage__c = null;
                     update updatedCategory;
                 }
                 // HINT: When requeuing the job check if tests are running
@@ -57,6 +58,10 @@ public class NewsCategoryQueueable implements Queueable, Database.AllowsCallouts
             } catch (Exception e) {
                 // TODO: Handle errors
                 // - Update category with error information
+                updatedCategory.Sync__c = false;
+                updatedCategory.Last_Synced__c = Datetime.now();
+                updatedCategory.ErrorMessage__c = e.getMessage();
+                update updatedCategory;
                 // - Log error to debug logs
             }
         }

@@ -33,7 +33,6 @@ public class NewsAPIResponse {
      */
     public class Source {
         // TODO: Define source fields
-        // Example fields:
         public String id { get; set; }
         public String name { get; set; }
     }
@@ -51,11 +50,15 @@ public class NewsAPIResponse {
         article.Name = apiArticle?.title != null ? apiArticle.title.left(75) : NO_NAME;
         // - Setting article fields from the API response
         // - Handling content length limits if needed
-        // - Handling date conversion
+        // - Handling date conversion 
+        //Gets first 250 charachters of the Author parameter of Article, if the value is null, then sets Default value: 'Without Author'
         article.Author__c = apiArticle?.author != null ? apiArticle.author.left(250) : NO_AUTHOR;
+        //Gets value of the Content parameter of Article, if the value is null, then sets Default value: 'Without Content'
         article.Content__c = apiArticle?.content != null ? apiArticle.content : NO_CONTENT;
+        //Gets value of the Content parameter of Article, if the value is null, then sets Default value: 'Without Description'
         article.Description__c = apiArticle?.description != null ? apiArticle.description : NO_DESCRIPTION;
         article.Published_At__c = apiArticle?.publishedAt;
+        //Gets value of the Content parameter of Source Id and Source Name, and concatenetes them to get new value
         article.Source__c = (apiArticle?.source?.id + '_' + apiArticle?.source?.name).left(250);
         return article;
     }
